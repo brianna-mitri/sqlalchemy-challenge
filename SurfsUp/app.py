@@ -6,6 +6,8 @@ from sqlalchemy import create_engine, func
 
 from flask import Flask, jsonify
 
+import datetime as dt
+
 # ------------------------------
 # Database Setup
 #-------------------------------
@@ -20,3 +22,64 @@ Base.prepare(autoload_with=engine)
 # save references to the tables
 Measurement = Base.classes.measurement
 Station = Base.classes.station
+
+# create session link from python to database
+session = Session(engine)
+
+
+# ------------------------------
+# Flask Setup
+#-------------------------------
+app = Flask(__name__)
+
+
+# ------------------------------
+# Flask Routes
+#-------------------------------
+
+# homepage route (list all available routes)
+@app.route('/')
+def home():
+    return (
+        f'Available Routes:<br/>'
+        f'/api/v1.0/precipitation<br/>'
+        f'/api/v1.0/stations<br/>'
+        f'/api/v1.0/tobs<br/>'
+        f'/api/v1.0/<start><br/>'
+        f'/api/v1.0/<start>/<end><br/>'
+    )
+
+# precipitation route (returns date and precipitation for last year in db)
+@app.route('/api/v1.0/precipitation')
+def precipitation():
+
+    # find the most recent data in the dataset
+    recent_date = session.query(Measurement.date).order_by(Measurement.date.desc()).first()[0]
+    recent_date = dt.datetime.strptime(recent_date, '%Y-%m-%d').date()
+
+    # get the date from 12 months prior
+    year_ago_date = recent_date - dt.timedelta(days=365)
+
+    # perform query to get the previous 12 months of precipitation data (date and precipitation scores)
+    prcp_data_year_ago = (session.query(Measurement.date, Measurement.prcp)
+                          .filter(Measurement.date >= year_ago_date)
+                          .all())
+    
+    # convert query results into a dictionary
+    prcp_dict = {date: prcp for date, prcp in prcp_data_year_ago}
+
+    # return the JSON representation of precipitation data
+    return jsonify(prcp_dict)
+
+# stations route
+
+# tobs route
+
+# start route
+
+# start/end route
+
+
+# run local server with the app
+if __name__ == '__main__':
+    app.run(debug=True)
