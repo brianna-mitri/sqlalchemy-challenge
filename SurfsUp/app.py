@@ -34,8 +34,18 @@ app = Flask(__name__)
 
 
 # ------------------------------
-# Flask Routes
+# Flask Routes & Queries
 #-------------------------------
+
+# define function to get year ago date
+def get_year_ago_date(session):
+    
+    # find the most recent data in the dataset
+    recent_date = session.query(Measurement.date).order_by(Measurement.date.desc()).first()[0]
+    recent_date = dt.datetime.strptime(recent_date, '%Y-%m-%d').date()
+
+    # get the date from 12 months prior
+    return recent_date - dt.timedelta(days=365)
 
 # homepage route (list all available routes)
 @app.route('/')
@@ -53,12 +63,8 @@ def home():
 @app.route('/api/v1.0/precipitation')
 def precipitation():
 
-    # find the most recent data in the dataset
-    recent_date = session.query(Measurement.date).order_by(Measurement.date.desc()).first()[0]
-    recent_date = dt.datetime.strptime(recent_date, '%Y-%m-%d').date()
-
-    # get the date from 12 months prior
-    year_ago_date = recent_date - dt.timedelta(days=365)
+    # get year ago date
+    year_ago_date = get_year_ago_date(session)
 
     # perform query to get the previous 12 months of precipitation data (date and precipitation scores)
     prcp_data_year_ago = (session.query(Measurement.date, Measurement.prcp)
@@ -99,7 +105,33 @@ def stations():
     # return JSON list
     return jsonify(station_info)
 
-# tobs route
+# tobs route (return dates and temp of most active station for recent 12 months)
+@app.route('/api/v1.0/tobs')
+def tobs():
+
+    # query to find the most active stations (most rows)
+    active_stations = (session.query(Measurement.station, func.count(Measurement.station))
+                       .group_by(Measurement.station)
+                       .order_by(func.count(Measurement.station).desc())
+                       .all())
+    
+    # get the most active station
+    most_active_station = active_stations[0][0]
+
+    # get year ago date
+    year_ago_date = get_year_ago_date(session)
+
+    # query the last 12 months of temperature observation data for this station
+    temp_data_year_ago = (session.query(Measurement.date, Measurement.tobs)
+                          .filter(Measurement.station == most_active_station)
+                          .filter(Measurement.date >= year_ago_date)
+                          .all())
+    
+    # convert query results into a dictionary
+    temp_dict = {date: tobs for date, tobs in temp_data_year_ago}
+
+    # return json list
+    return jsonify(temp_dict)
 
 # start route
 
