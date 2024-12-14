@@ -133,7 +133,33 @@ def tobs():
     # return json list
     return jsonify(temp_dict)
 
-# start route
+# start route (accepts start date as parameter in url and returns min, max, avg temp)
+@app.route('/api/v1.0/<start>')
+def start(start):
+
+    # convert start date from str to date object
+    start_date = dt.datetime.strptime(start, '%Y-%m-%d').date()
+
+    # query for min, max, avg temp from given start date to end of dataset
+    sel = [func.min(Measurement.tobs),  #lowest temp
+           func.max(Measurement.tobs),  #highest temp
+           func.avg(Measurement.tobs)]  #average temp
+    
+    temp_stats = session.query(*sel).filter(Measurement.date >= start_date).all()
+
+    # create dictionary for results
+    for tmin, tmax, tavg in temp_stats:
+        temp_stats_dict = {
+            'TMIN': tmin,
+            'TMAX': tmax,
+            'TAVG': tavg
+        }
+
+    # add start date to dict
+    temp_stats_dict['Start Date'] = start
+
+    # return JSON dict
+    return jsonify(temp_stats_dict)
 
 # start/end route
 
