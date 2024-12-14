@@ -71,7 +71,33 @@ def precipitation():
     # return the JSON representation of precipitation data
     return jsonify(prcp_dict)
 
-# stations route
+# stations route (return stations' data)
+@app.route('/api/v1.0/stations')
+def stations():
+
+    # query list of stations
+    stations = (session.query(
+                Station.station, 
+                Station.name, 
+                Station.latitude, 
+                Station.longitude, 
+                Station.elevation)
+                .all())
+    
+    # convert result into list of dictionaries
+    station_info = []
+    for id, name, lat, lon, elev in stations:
+        station_dict = {
+            'station': id,
+            'name': name,
+            'latitude': lat,
+            'longitude': lon,
+            'elevation': elev
+        }
+        station_info.append(station_dict)
+
+    # return JSON list
+    return jsonify(station_info)
 
 # tobs route
 
