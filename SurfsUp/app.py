@@ -161,8 +161,37 @@ def start(start):
     # return JSON dict
     return jsonify(temp_stats_dict)
 
-# start/end route
+# start/end route (accepts start and end dates as parameters in url and returns min, max, avg temp)
+@app.route('/api/v1.0/<start>/<end>')
+def start_end(start, end):
 
+    # convert dates from str to date object
+    start_date = dt.datetime.strptime(start, '%Y-%m-%d').date()
+    end_date = dt.datetime.strptime(end, '%Y-%m-%d').date()
+
+    # query for min, max, avg temp from given start date to end of dataset
+    sel = [func.min(Measurement.tobs),  #lowest temp
+           func.max(Measurement.tobs),  #highest temp
+           func.avg(Measurement.tobs)]  #average temp
+    
+    temp_stats = (session.query(*sel)
+                  .filter(Measurement.date >= start_date)
+                  .filter(Measurement.date <= end_date)
+                  .all())
+
+    # create dictionary for results
+    tmin, tmax, tavg = temp_stats[0]
+
+    temp_stats_dict = {
+        'Start Date': start,
+        'End Date': end,
+        'TMIN': tmin,
+        'TMAX': tmax,
+        'TAVG': tavg
+    }
+
+    # return JSON dict
+    return jsonify(temp_stats_dict)
 
 # run local server with the app
 if __name__ == '__main__':
