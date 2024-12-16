@@ -4,7 +4,7 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
 
-from flask import Flask, jsonify
+from flask import Flask, render_template, jsonify
 
 import datetime as dt
 
@@ -50,14 +50,15 @@ def get_year_ago_date(session):
 # homepage route (list all available routes)
 @app.route('/')
 def home():
-    return (
-        f'Available Routes:<br/>'
-        f'/api/v1.0/precipitation<br/>'
-        f'/api/v1.0/stations<br/>'
-        f'/api/v1.0/tobs<br/>'
-        f'/api/v1.0/<start><br/>'
-        f'/api/v1.0/<start>/<end><br/>'
-    )
+    return render_template('home_weather.html')
+    # return (
+    #     f'Available Routes:<br/>'
+    #     f'/api/v1.0/precipitation<br/>'
+    #     f'/api/v1.0/stations<br/>'
+    #     f'/api/v1.0/tobs<br/>'
+    #     f'/api/v1.0/<start><br/>'
+    #     f'/api/v1.0/<start>/<end><br/>'
+    # )
 
 # precipitation route (returns date and precipitation for last year in db)
 @app.route('/api/v1.0/precipitation')
