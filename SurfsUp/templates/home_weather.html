@@ -11,6 +11,13 @@
     <h1>Hawaii Weather API</h1>
 
     <!-- Static Routes -->
+     <p>
+      <br>
+      <strong style="font-size: 20px;">
+         Generate the following data:
+      </strong>
+     </p>
+
      <button onclick="window.location.href='/api/v1.0/precipitation'">
         Precipitation Data (Recent 12 Months)
      </button>
@@ -23,7 +30,14 @@
         Temperature for Most Active Station (Recent 12 Months)
      </button>
 
-   <!-- Dynamic Routes: Inpute Start & Optional End Dates -->
+   <!-- Dynamic Routes: Input Start & Optional End Dates -->
+    <p> 
+      <br> 
+      <strong style="font-size: 20px;">
+         Find mininum, maximum, and average temperatures based on the following date(s):
+      </strong>
+    </p>
+
     <form onsubmit="goToDates(event)">
       <label for="start-date">Start Date (YYYY-MM-DD): </label>
       <input type="text" id="start-date" name="start-date" required>
