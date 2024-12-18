@@ -23,9 +23,6 @@ Base.prepare(autoload_with=engine)
 Measurement = Base.classes.measurement
 Station = Base.classes.station
 
-# create session link from python to database
-session = Session(engine)
-
 
 # ------------------------------
 # Flask Setup
@@ -51,18 +48,13 @@ def get_year_ago_date(session):
 @app.route('/')
 def home():
     return render_template('home_weather.html')
-    # return (
-    #     f'Available Routes:<br/>'
-    #     f'/api/v1.0/precipitation<br/>'
-    #     f'/api/v1.0/stations<br/>'
-    #     f'/api/v1.0/tobs<br/>'
-    #     f'/api/v1.0/<start><br/>'
-    #     f'/api/v1.0/<start>/<end><br/>'
-    # )
 
 # precipitation route (returns date and precipitation for last year in db)
 @app.route('/api/v1.0/precipitation')
 def precipitation():
+
+    # create session link from python to database
+    session = Session(engine)
 
     # get year ago date
     year_ago_date = get_year_ago_date(session)
@@ -72,6 +64,9 @@ def precipitation():
                           .filter(Measurement.date >= year_ago_date)
                           .all())
     
+    # close session
+    session.close()
+
     # convert query results into a dictionary
     prcp_dict = {date: prcp for date, prcp in prcp_data_year_ago}
 
@@ -82,6 +77,9 @@ def precipitation():
 @app.route('/api/v1.0/stations')
 def stations():
 
+    # create session link from python to database
+    session = Session(engine)
+
     # query list of stations
     stations = (session.query(
                 Station.station, 
@@ -90,6 +88,9 @@ def stations():
                 Station.longitude, 
                 Station.elevation)
                 .all())
+    
+    # close session
+    session.close()
     
     # convert result into list of dictionaries
     station_info = []
@@ -110,6 +111,9 @@ def stations():
 @app.route('/api/v1.0/tobs')
 def tobs():
 
+    # create session link from python to database
+    session = Session(engine)
+
     # query to find the most active stations (most rows)
     active_stations = (session.query(Measurement.station, func.count(Measurement.station))
                        .group_by(Measurement.station)
@@ -128,6 +132,9 @@ def tobs():
                           .filter(Measurement.date >= year_ago_date)
                           .all())
     
+    # close session
+    session.close()
+
     # convert query results into a dictionary
     temp_dict = {date: tobs for date, tobs in temp_data_year_ago}
 
@@ -138,6 +145,9 @@ def tobs():
 @app.route('/api/v1.0/<start>')
 def start(start):
 
+    # create session link from python to database
+    session = Session(engine)
+
     # convert start date from str to date object
     start_date = dt.datetime.strptime(start, '%Y-%m-%d').date()
 
@@ -147,6 +157,9 @@ def start(start):
            func.avg(Measurement.tobs)]  #average temp
     
     temp_stats = session.query(*sel).filter(Measurement.date >= start_date).all()
+
+    # close session
+    session.close()
 
     # create dictionary for results
     for tmin, tmax, tavg in temp_stats:
@@ -166,6 +179,9 @@ def start(start):
 @app.route('/api/v1.0/<start>/<end>')
 def start_end(start, end):
 
+    # create session link from python to database
+    session = Session(engine)
+
     # convert dates from str to date object
     start_date = dt.datetime.strptime(start, '%Y-%m-%d').date()
     end_date = dt.datetime.strptime(end, '%Y-%m-%d').date()
@@ -179,6 +195,9 @@ def start_end(start, end):
                   .filter(Measurement.date >= start_date)
                   .filter(Measurement.date <= end_date)
                   .all())
+    
+    # close session
+    session.close()
 
     # create dictionary for results
     tmin, tmax, tavg = temp_stats[0]
